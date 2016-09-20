@@ -1,0 +1,263 @@
+#include <graphics.h>
+#include <ctime>
+#include <conio.h>
+#include <iostream>
+
+using namespace std;
+
+int maxrain;		// 雨点总数
+int first = 370;	//雨点初始随机位置相关参量
+double v;			//雨点初始下落随机速度相关参量
+
+struct RAIN       //雨点结构体
+{
+	int	x;			//雨点x坐标
+	int		y;			//雨点y坐标	
+	double	step;		//雨点速度
+};
+
+RAIN rain[600];   //初始化雨点结构体数组
+
+/*********雨点初始化*********/
+void InitRain(int i)
+{
+
+	rain[i].y = rand() % first;							//随机雨点出现的y坐标--控制在0~30
+	rain[i].x = rand() % 800;							//随即雨点出现的x坐标
+	rain[i].step = (rand() % 3000) / 3000.0 + v*1.2;	//随机雨点初始速度
+}
+/*********背景绘制*********/
+void background()
+{
+	// 背景色
+	setlinecolor(BLACK);
+	// 站牌
+	rectangle(0, 0, 800, 370);
+	// 边框
+	rectangle(60, 130, 170, 330);
+	// 内部
+	rectangle(70, 140, 160, 320);
+	// 底部
+	rectangle(65, 330, 165, 350);
+	// 等车棚
+	// 顶部
+	rectangle(220, 100, 750, 110);
+	// 柱子
+	rectangle(240, 110, 250, 350);
+	rectangle(720, 110, 730, 350);
+	// 公告
+	rectangle(250, 140, 720, 290);
+	//路边
+	rectangle(0, 350, 200, 370);
+	rectangle(200, 350, 400, 370);
+	rectangle(400, 350, 600, 370);
+	rectangle(600, 350, 800, 370);
+	//马路线
+	rectangle(100, 550, 300, 570);
+	rectangle(500, 550, 700, 570);
+	settextstyle(35, 24, _T("楷体"));
+	settextcolor(BLACK);
+	TCHAR s[] = _T("模");
+	outtextxy(90, 150, s);
+	TCHAR ss[] = _T("拟");
+	outtextxy(90, 190, ss);
+	TCHAR sss[] = _T("下");
+	outtextxy(90, 230, sss);
+	TCHAR ssss[] = _T("雨");
+	outtextxy(90, 270, ssss);
+}
+
+/*********水波的产生及消失*********/
+void  print_wave(int i)						
+{
+	int a = 3; int b = 2;
+	int x1, y1, x2, y2;
+	x1 = (int)rain[i].x - (b / 2);
+	y1 = (int)rain[i].y - (a / 2);
+	x2 = (int)rain[i].x + (b / 2);
+	y2 = (int)rain[i].y + (a / 2);
+	for (int i = 0; i < 10; i++)			//对水波的出现、消失进行循环
+	{
+
+		arc(x1 - 1, y1 - 1, x2 + 1, y2 + 1, 60, 60);
+		clearellipse(x1 - 1, y1 - 1, x2 + 1, y2 + 1);//擦除水波
+		x1 = x1 - 1;
+		y1 = y1 - 1;
+		x2 = x2 + 1;
+		y2 = y2 + 1;
+	}
+	clearellipse(x1 - 1, y1 - 1, x2 + 1, y2 + 1);
+}
+
+/*********移动雨点（更新雨点位置）*********/
+void MoveRain(int i)
+{
+	// 擦掉原来的雨点
+	clearrectangle((int)rain[i].x, rain[i].y, (int)rain[i].x + 1, rain[i].y + 4);
+	line(0, 370, 800, 370);
+	rain[i].y += (int)rain[i].step;     //计算雨点新位置
+	rain[i].step += 0.1;				//雨点加速度 0.1
+	srand(i*i*time(NULL));				//重设随机种子
+	if (rain[i].y > rand() % 230 + 380)			//在落地点绘制水波并重新初始化雨点
+	{
+		print_wave(i);
+		InitRain(i);
+	}
+	// 画新雨点
+	else {
+		rectangle((int)rain[i].x, rain[i].y, (int)rain[i].x + 1, rain[i].y + 4);
+	}
+}
+
+/*********对少量雨点下落的模拟*********/
+void run()
+{
+	//一滴雨
+	RAIN one;
+	one.x = 400;
+	one.y = 0;
+	one.step = 0.005;
+	//雨落
+	rectangle((int)one.x, one.y, (int)one.x + 1, one.y + 4);
+	while (one.y < 500)
+	{
+		clearrectangle((int)one.x, one.y, (int)one.x + 1, one.y + 4);
+		line(0, 370, 800, 370);
+		background();
+		one.y += (int)one.step;
+		one.step += 0.04;
+		rectangle((int)one.x, one.y, (int)one.x + 1, one.y + 4);
+		Sleep(10);
+	}
+	rectangle((int)one.x, one.y, (int)one.x + 1, one.y + 4);
+	//水波
+	int a = 2; int b = 10;
+	int x1, y1, x2, y2;
+	x1 = (int)one.x - (b / 2);
+	y1 = (int)one.y - (a / 2);
+	x2 = (int)one.x + (b / 2);
+	y2 = (int)one.y + (a / 2);
+	for (int i = 0; i < 20; i++)			//对水波的出现、消失进行循环
+	{
+
+		arc(x1 - 1, y1 - 1, x2 + 1, y2 + 1, 60, 60);
+		Sleep(50);
+		clearellipse(x1 - 1, y1 - 1, x2 + 1, y2 + 1);//擦除水波
+		x1 = x1 - 1;
+		y1 = y1 - 1;
+		x2 = x2 + 1;
+		y2 = y2 + 1;
+	}
+	Sleep(50);
+	clearellipse(x1 - 1, y1 - 1, x2 + 1, y2 + 1);
+	//两滴雨
+	RAIN two1, two2;
+	two1.x = 200;
+	two2.x = 600;
+	two1.y = 0;
+	two2.y = 0;
+	two1.step = 0.005;
+	two2.step = 0.005;
+	//雨落
+	rectangle((int)two1.x, two1.y, (int)two1.x + 1, two1.y + 4);
+	rectangle((int)two2.x, two2.y, (int)two2.x + 1, two2.y + 4);
+	while (two1.y < 500)
+	{
+		clearrectangle((int)two1.x, two1.y, (int)two1.x + 1, two1.y + 4);
+		clearrectangle((int)two2.x, two2.y, (int)two2.x + 1, two2.y + 4);
+		line(0, 370, 800, 370);
+		background();
+		two1.y += (int)two1.step;
+		two2.y += (int)two2.step;
+		two1.step += 0.04;
+		two2.step += 0.04;
+		rectangle((int)two1.x, two1.y, (int)two1.x + 1, two1.y + 4);
+		rectangle((int)two2.x, two2.y, (int)two2.x + 1, two2.y + 4);
+		Sleep(10);
+	}
+	rectangle((int)two1.x, two1.y, (int)two1.x + 1, two1.y + 4);
+	rectangle((int)two2.x, two2.y, (int)two2.x + 1, two2.y + 4);
+	//水波
+	x1 = (int)two1.x - (b / 2);
+	y1 = (int)two1.y - (a / 2);
+	x2 = (int)two1.x + (b / 2);
+	y2 = (int)two1.y + (a / 2);
+	for (int i = 0; i < 20; i++)			//对水波的出现、消失进行循环
+	{
+
+		arc(x1 - 1, y1 - 1, x2 + 1, y2 + 1, 60, 60);
+		arc(x1 + 400 - 1, y1 - 1, x2 + 400 + 1, y2 + 1, 60, 60);
+		Sleep(50);
+		clearellipse(x1 - 1, y1 - 1, x2 + 1, y2 + 1);//擦除水波
+		clearellipse(x1 + 400 - 1, y1 - 1, x2 + 400 + 1, y2 + 1);
+		x1 = x1 - 1;
+		y1 = y1 - 1;
+		x2 = x2 + 1;
+		y2 = y2 + 1;
+	}
+	Sleep(50);
+	clearellipse(x1 - 1, y1 - 1, x2 + 1, y2 + 1);
+	clearellipse(x1 + 400 - 1, y1 - 1, x2 + 400 + 1, y2 + 1);
+	Sleep(100);
+}
+
+void countdown()					//倒计时显示文字
+{
+	settextstyle(35,24,_T("楷体"));
+	TCHAR s[] = _T("大波雨即将来临");
+	outtextxy(320, 151, s);
+	settextstyle(60, 37, _T("楷体"));
+	for (int f = 5; f >=0;f--)
+	{
+		_stprintf(s, _T("%d"), f);
+		outtextxy(470, 200, s);
+		Sleep(990);
+		clearrectangle(450, 190, 520, 250);
+	}
+	clearrectangle(310, 150, 700, 200);
+	Sleep(20);
+}
+
+
+
+// 主函数
+void main()
+{
+	int read_in;
+	while (1)							//雨量大小选择
+	{
+		cout << "请输入雨量大小(2-5): ";
+		cin >> read_in;
+		if (read_in >= 2 && read_in <= 5)
+		{
+			break;
+		}
+	}
+	maxrain = read_in * 80;			//对雨点数量初始化
+	v = (read_in + 3)*0.8;			//对雨点随机速度参量初始化
+	srand((unsigned)time(NULL));	// 随机种子
+	initgraph(800, 600, SHOWCONSOLE);		// 创建窗口
+	setbkcolor(WHITE);				//设置窗口背景为白色
+	cleardevice();
+	setfillcolor(BLACK);			//设置雨点填充颜色为黑色
+	setlinecolor(BLACK);			//设置线条颜色为黑色
+	background();
+	// 初始化所有雨滴
+	run();							//模拟少量雨点效果
+	countdown();					//倒计时显示-5s
+	for (int i = 0; i < maxrain; i++)	
+	{
+		InitRain(i);
+	}
+	first = 30;						//更改雨点初始位置的y坐标
+	// 雨滴循环下落，随机位置
+	while (!kbhit())
+	{
+
+		for (int i = 0; i < maxrain; i++)
+			MoveRain(i);			//遍历雨点，更新其位置
+		background();				//对背景进行重绘
+		Sleep(10);
+	}
+	closegraph();					// 关闭窗口
+}

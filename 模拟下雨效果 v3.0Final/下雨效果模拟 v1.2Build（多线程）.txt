@@ -1,0 +1,197 @@
+#include <graphics.h>
+#include <ctime>
+#include <conio.h>
+#include <iostream>
+#include <Windows.h>
+#include <cstdlib>
+#include <queue>
+using namespace std;
+
+int maxstar=400;	// 雨滴总数
+int first=280;
+double v=8;			//下落速度
+int water[610][4];
+int h=0;
+int allll;
+queue<int> q;
+bool yes = true;
+
+struct STAR
+{
+	double	x;
+	int		y;
+	double	step;
+	int		color;
+};
+
+STAR star[600]={0};
+
+// 初始化
+void InitStar(int i)
+{
+	srand(time(NULL)*i);
+	star[i].y = rand()%first;
+	star[i].x = rand() %800;
+	star[i].step = (rand() % 3000) / 3000.0 + v*1.2;
+}
+/********** 背景 **********/
+void background()
+{
+	// 背景色
+	setlinecolor(BLACK);
+	rectangle(0, 0, 800, 370);// 站牌
+	// 边框
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(60, 130, 170, 330);
+	// 内部
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(70, 140, 160, 320);
+	// 底部
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(65, 330, 165, 350);
+	// 等车棚
+	// 顶部
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(220, 100, 750, 110);
+	// 柱子
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(240, 110, 250, 350);
+	rectangle(720, 110, 730, 350);
+	// 公告
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(250, 140, 720, 290);
+	//路边
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(0, 350, 200, 370);
+	rectangle(200, 350, 400, 370);
+	rectangle(400, 350, 600, 370);
+	rectangle(600, 350, 800, 370);
+	//马路线
+	setlinecolor(RGB(0, 0, 0));
+	rectangle(100, 550, 300, 570);
+	rectangle(500, 550, 700, 570);
+}
+
+//水波
+DWORD WINAPI  print_wave(LPVOID j)
+{
+	int i = allll;
+	int a=3;int b=2;
+	int x1,y1,x2,y2;
+
+	x1=(int)star[i].x-(b/2);
+	y1=(int)star[i].y-(a/2);
+	x2=(int)star[i].x+(b/2);
+	y2=(int)star[i].y+(a/2);
+	for (int i=0;i<10;i++)			//对水波的出现、消失进行循环
+	{
+		arc(x1-1,y1-1,x2+1,y2+1,60,60);
+		clearellipse(x1-1,y1-1,x2+1,y2+1);//擦除水波
+		x1=x1-1;
+		y1=y1-1;
+		x2=x2+1;
+		y2=y2+1;
+	}
+	arc(x1 - 1, y1 - 1, x2 + 1, y2 + 1, 60, 60);
+	q.push(x1); q.push(y1); q.push(x2); q.push(y2);
+	clearellipse(x1-1,y1-1,x2+1,y2+1);
+	return 0;
+}
+
+// 移动雨点
+void MoveStar(int i)
+{
+	// 擦掉原来的雨点
+	clearrectangle((int)star[i].x, star[i].y, (int)star[i].x, star[i].y + 4);
+	line(0,370,800,370);
+	HANDLE   hThread; 
+	star[i].y +=(int) star[i].step;    // 计算新位置
+	star[i].step+=0.1;
+	srand(i*i);
+	if (star[i].y > rand()%230+380)	
+	{	
+		allll = i;
+		//print_wave(i);
+		
+		hThread =  CreateThread(NULL, 0, print_wave, NULL, 0, NULL);
+		InitStar(i);
+	}
+	// 画新雨点
+	else line((int)star[i].x, star[i].y,(int)star[i].x,star[i].y+4);
+	
+}
+
+DWORD WINAPI MyThread1(PVOID pvParam)
+{
+	srand((unsigned)time(NULL));	// 随机种子
+	initgraph(800, 600, SHOWCONSOLE);		// 创建窗口
+	setbkcolor(WHITE);
+	line(0, 370, 800, 370);
+	cleardevice();
+	setfillcolor(WHITE);
+	setlinecolor(BLACK);
+	for (int i = 0; i < maxstar; i++)
+	{
+		InitStar(i);
+		star[i].y = rand() % 800;
+	}
+	first = 30;
+	// 雨滴循环下落，随机位置
+	while (!kbhit())
+	{
+		for (int i = 0; i < maxstar; i++)
+			MoveStar(i);
+		background();
+		Sleep(20);
+
+	}
+	yes = false;
+	closegraph();
+	return true;
+}
+
+DWORD WINAPI MyThread2(PVOID pvParam)
+{
+	while (1)
+	{
+		if (!q.empty())
+		{
+			int x1, x2, y1, y2;
+			x1 = q.front(); q.pop();
+			y1 = q.front(); q.pop();
+			x2 = q.front(); q.pop();
+			y2 = q.front(); q.pop();
+			clearellipse(x1 - 2, y1 - 2, x2 + 2, y2 + 2);
+		}
+		Sleep(40);
+	}
+	return true;
+}
+
+// 主函数
+void main()
+{
+	int read_in;
+	//setorigin(10, 10);
+	while(1)
+	{
+		cout<<"请输入雨量大小(2-5): ";
+		cin>>read_in;
+		if (read_in>=2&&read_in<=5)
+		{
+			break;
+		} 
+	}
+	maxstar=read_in*20;
+	v=(read_in+3)*0.8;
+	HANDLE hThread1 = CreateThread(NULL, 0, MyThread1, NULL, 0, NULL);
+	HANDLE hThread2 = CreateThread(NULL, 0, MyThread2, NULL, 0, NULL);
+	//HANDLE hThread3 = CreateThread(NULL, 0, MyThread3, NULL, 0, NULL);
+	system("pause");
+	closegraph();					// 关闭窗口
+}
+
+
+
+
+
